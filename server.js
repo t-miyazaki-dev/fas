@@ -12,7 +12,7 @@ fastify.register( fastifyMySQL,
    {
 // connectionStringで、接続先のDBを指定する。パスワード、ユーザー名、ポート番号、DB名を指定する。
   connectionString: 'mysql://root:rootpass@db:3306/sampledb'
-})
+   })
 
 
 fastify.get('/user/:id', function(req, reply) {

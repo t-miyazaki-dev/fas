@@ -9,9 +9,12 @@ services:
       - .:/usr/src/app
     ports:
       - "3000:3000"
+    depends_on:
+       db:
+        condition: service_healthy
     command: node server.js
-    depends_on: 
-      - db
+    
+       
   
   db:
     image: mysql:8.0
