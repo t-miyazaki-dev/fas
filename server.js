@@ -11,7 +11,7 @@ const fastify = Fastify({
 fastify.register( fastifyMySQL,
    {
 // connectionStringで、接続先のDBを指定する。パスワード、ユーザー名、ポート番号、DB名を指定する。
-  connectionString: 'mysql://root:rootpass@db:3306/sampledb'
+  connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
    })
 
 

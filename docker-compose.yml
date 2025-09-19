@@ -13,6 +13,13 @@ services:
        db:
         condition: service_healthy
     command: node server.js
+    environment:
+       DB_USER: root
+       DB_PASS: rootpass
+       DB_HOST: db
+       DB_PORT: 3306
+       DB_NAME: sampledb
+       
     
        
   
