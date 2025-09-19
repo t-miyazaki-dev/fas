@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  app:
+    image: node:22
+    container_name: node_app
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "3000:3000"
+    command: node server.js
+    depends_on: 
+      - db
+  
+  db:
+    image: mysql:8.0
+    environment:
+       MYSQL_ROOT_PASSWORD: rootpass
+       MYSQL_DATABASE: sampledb
+       MYSQL_USER: user
+       MYSQL_PASSWORD: pass
+
+    ports:
+       - "3306:3306" 
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+
+
+    volumes:
+      - db_data:/var/lib/mysql
+        
+
+volumes:
+  db_data:
+
+
