@@ -1,0 +1,4 @@
+{ 
+"extends": "./tsconfig.json", 
+"include": ["write2.ts","read2.ts"] 
+}
