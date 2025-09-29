@@ -2,22 +2,24 @@ import Fastify from "fastify";
 
 import fastifyMySQL from "@fastify/mysql"
 
-import type { Pool, PoolConnection } from "mysql2";
+import  type { FastifyRequest, FastifyReply } from "fastify";
 
 
 
 const fastify = Fastify({
     logger:true
-})
+});
 
-declare module "fastify" {
-  interface FastifyInstance {
-    mysql: {
-      query: Pool["query"];
-      getConnection: () => Promise<PoolConnection>;
-    };
-  }
+interface UserBody {
+  name: string;
+  age: number;
 }
+
+interface UserId{
+  id:number;
+}
+
+
 
 
 fastify.register(fastifyMySQL, {
@@ -25,7 +27,7 @@ fastify.register(fastifyMySQL, {
 });
 
 //read
-fastify.get('/user/:id', function(req, reply) {
+fastify.get<{ Body: UserBody;Params: UserId}>('/user/:id', function(req,reply) {
   fastify.mysql.query(
     'SELECT id, name, age FROM user WHERE id=?', [req.params.id],
     function onResult (err, result) {
@@ -35,7 +37,8 @@ fastify.get('/user/:id', function(req, reply) {
 })
 
 //create
-fastify.post('/user', (req, reply) => {
+
+fastify.post<{ Body: UserBody;Params: UserId}>('/user', (req,reply) => {
   const { name, age } = req.body;
   
   fastify.mysql.query(
@@ -52,9 +55,20 @@ fastify.post('/user', (req, reply) => {
 });
 
 //update
-fastify.patch('/user/:id', (req, reply) => {
-  const { name, age } = req.body; // 更新する内容
-  const { id } = req.params;      // 更新対象のID
+
+
+// interface UpdateUserBody {
+//   name: string;
+//   age: number;
+// }
+
+// interface UpdateUserId{
+//   id:number;
+// }
+
+fastify.patch<{ Body: UserBody;Params: UserId}>('/user/:id', (req,reply) => {
+  const { name, age } = req.body;
+  const { id } = req.params;     
 
   fastify.mysql.query(
     'UPDATE user SET name = ?, age = ? WHERE id = ?',
@@ -72,7 +86,7 @@ fastify.patch('/user/:id', (req, reply) => {
 });
 
 //delete
-fastify.delete('/user/:id', (req,reply) => {
+fastify.delete<{ Body: UserBody;Params: UserId}>('/user/:id', (req,reply) => {
   const { id } = req.params;
 
   fastify.mysql.query(
@@ -96,7 +110,7 @@ fastify.delete('/user/:id', (req,reply) => {
 
 
 
-fastify.get(`/health_check`,async(request,reply) => {
+fastify.get(`/health_check`,async(request: FastifyRequest,reply: FastifyReply) => {
     return `OK`;
 });
 
@@ -111,3 +125,6 @@ const start = async () => {
 };
 
 start();
+
+
+
