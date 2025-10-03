@@ -3,19 +3,22 @@
   "compilerOptions": {
     // File Layout
     // "rootDir": "./src",
-    // "outDir": "./dist",
+    "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "ESNext",
     "target": "ESNext",
     "types": ["node"],
-    "esModuleInterop": false,         // これを追加
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
     // and npm install -D @types/node
+    
+    
+    "moduleResolution": "node",
 
     // Other Outputs
     "sourceMap": true,

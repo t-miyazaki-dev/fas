@@ -1,8 +1,16 @@
+import 'dotenv/config';
+
 import Fastify from "fastify";
 
 import fastifyMySQL from "@fastify/mysql"
 
 import  type { FastifyRequest, FastifyReply } from "fastify";
+
+import { PrismaClient } from "@prisma/client";
+
+
+
+const prisma = new PrismaClient();
 
 
 
@@ -27,31 +35,46 @@ fastify.register(fastifyMySQL, {
 });
 
 //read
-fastify.get<{ Body: UserBody;Params: UserId}>('/user/:id', function(req,reply) {
-  fastify.mysql.query(
-    'SELECT id, name, age FROM user WHERE id=?', [req.params.id],
-    function onResult (err, result) {
-      reply.send(err || result)
-    }
-  )
-})
+fastify.get<{ Body: UserBody;Params: UserId}>('/user/:id',async function (req,reply) {
+  const user = await prisma.user.findUnique({
+    where: {id: Number(req.params.id)},
+});
+reply.send(user);
+  
+  
+  // fastify.mysql.query(
+  //   'SELECT id, name, age FROM user WHERE id=?', [req.params.id],
+  //   function onResult (err, result) {
+  //     reply.send(err || result)
+  //   }
+  // )
+});
+
 
 //create
 
-fastify.post<{ Body: UserBody;Params: UserId}>('/user', (req,reply) => {
+fastify.post<{ Body: UserBody;Params: UserId}>('/user',async (req,reply) => {
   const { name, age } = req.body;
+
+  const user = await prisma.user.create({
+    data: {name,age}
+  });
+  reply.send(user);
+
+
+
   
-  fastify.mysql.query(
-    'INSERT INTO user (name, age) VALUES (?, ?)',
-    [name, age],
-    (err, result) => {
-      if (err) {
-        reply.code(500).send(err);
-      } else {
-        reply.send({ id: result.insertId, name, age });
-      }
-    }
-  );
+  // fastify.mysql.query(
+  //   'INSERT INTO user (name, age) VALUES (?, ?)',
+  //   [name, age],
+  //   (err, result) => {
+  //     if (err) {
+  //       reply.code(500).send(err);
+  //     } else {
+  //       reply.send({ id: result.insertId, name, age });
+  //     }
+  //   }
+  // );
 });
 
 //update
@@ -66,40 +89,55 @@ fastify.post<{ Body: UserBody;Params: UserId}>('/user', (req,reply) => {
 //   id:number;
 // }
 
-fastify.patch<{ Body: UserBody;Params: UserId}>('/user/:id', (req,reply) => {
+fastify.patch<{ Body: UserBody;Params: UserId}>('/user/:id', async(req,reply) => {
   const { name, age } = req.body;
-  const { id } = req.params;     
+  const { id } = req.params;    
+  
+  const user = await prisma.user.update({
+    where: {id: Number(id)},
+    data: {name,age}
 
-  fastify.mysql.query(
-    'UPDATE user SET name = ?, age = ? WHERE id = ?',
-    [name, age, id],
-    (err, result) => {
-      if (err) {
-        reply.code(500).send(err);
-      } else if (result.affectedRows === 0) {
-        reply.code(404).send({ message: 'User not found' });
-      } else {
-        reply.send({ id, name, age });
-      }
-    }
-  );
+  })
+
+  reply.send(user);
+
+
+
+  // fastify.mysql.query(
+  //   'UPDATE user SET name = ?, age = ? WHERE id = ?',
+  //   [name, age, id],
+  //   (err, result) => {
+  //     if (err) {
+  //       reply.code(500).send(err);
+  //     } else if (result.affectedRows === 0) {
+  //       reply.code(404).send({ message: 'User not found' });
+  //     } else {
+  //       reply.send({ id, name, age });
+  //     }
+  //   }
+  // );
 });
 
 //delete
-fastify.delete<{ Body: UserBody;Params: UserId}>('/user/:id', (req,reply) => {
+fastify.delete<{ Body: UserBody;Params: UserId}>('/user/:id', async(req,reply) => {
   const { id } = req.params;
 
-  fastify.mysql.query(
-    'DELETE from user WHERE id = ?',
-    [id],
-    (err,result) => {
-      if (err){
-        reply.code(500).send(err);
-      }else{
-        reply.send({deletedId: id});
-      }
-    }
-  );
+  const user = await prisma.user.delete({
+    where: {id: Number(id)}
+  })
+  reply.send(user);
+
+  // fastify.mysql.query(
+  //   'DELETE from user WHERE id = ?',
+  //   [id],
+  //   (err,result) => {
+  //     if (err){
+  //       reply.code(500).send(err);
+  //     }else{
+  //       reply.send({deletedId: id});
+  //     }
+  //   }
+  // );
 })
 
 
