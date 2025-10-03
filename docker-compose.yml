@@ -12,14 +12,15 @@ services:
     depends_on:
        db:
         condition: service_healthy
-    command: node server.js
+    # command: node server.js
+    command: npx ts-node server.ts
     environment:
        DB_USER: root
        DB_PASS: rootpass
        DB_HOST: db
        DB_PORT: 3306
        DB_NAME: sampledb
-    build: .
+  
     
     env_file:
       - .env
