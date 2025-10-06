@@ -8,6 +8,10 @@ import  type { FastifyRequest, FastifyReply } from "fastify";
 
 import { PrismaClient } from "@prisma/client";
 
+import cors from '@fastify/cors';
+
+
+
 
 
 const prisma = new PrismaClient();
@@ -26,6 +30,8 @@ interface UserBody {
 interface UserId{
   id:number;
 }
+
+
 
 
 
@@ -154,6 +160,7 @@ fastify.get(`/health_check`,async(request: FastifyRequest,reply: FastifyReply) =
 
 const start = async () => {
   try {
+    await fastify.register(cors, { origin: '*' });
     await fastify.listen({ port: 3000,host: "0.0.0.0" });
     console.log('サーバーがポート 3000 で起動しました。');
   } catch (err) {
