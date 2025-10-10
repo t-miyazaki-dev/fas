@@ -2,11 +2,20 @@ version: "3.9"
 
 services:
   app:
-    image: node:22
+    #image: node:22
+    build: .
     container_name: node_app
     working_dir: /usr/src/app
+    
+    #volumes:
+     # - .:/usr/src/app:cached
     volumes:
-      - .:/usr/src/app
+      - .:/usr/src/app:cached
+    
+
+     
+
+     
     ports:
       - "3000:3000"
     depends_on:

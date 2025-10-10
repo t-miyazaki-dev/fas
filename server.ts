@@ -10,6 +10,8 @@ import { PrismaClient } from "@prisma/client";
 
 import cors from '@fastify/cors';
 
+import bcrypt from "bcryptjs";
+
 
 
 
@@ -69,7 +71,8 @@ fastify.post<{ Body: UserBody;Params: UserId}>('/user',async (req,reply) => {
   const { name, age } = req.body;
 
   const user = await prisma.user.create({
-    data: {name,age}
+    data: {name,email: "dummy@example.com", // 仮のメール
+    password: "temporary",  age}
   });
   reply.send(user);
 
@@ -151,6 +154,39 @@ fastify.delete<{ Body: UserBody;Params: UserId}>('/user/:id', async(req,reply) =
   //   }
   // );
 })
+
+
+
+
+//ユーザー登録
+
+interface RegisterBody{
+  name: string;
+  email:string;
+  password: string;
+  age: number;
+}
+
+fastify.post<{Body: RegisterBody}>(`/register`,async(req,reply) => {
+  const {name,email,password,age} = req.body;
+  
+    const hashedPassword = await bcrypt.hash(password,10)
+
+    const user = await prisma.user.create({
+      data:{
+        name,
+        email,
+        password: hashedPassword,
+        age,
+        }
+    })
+    reply.send(user)
+    //passwordも返すかも
+  }
+
+
+)
+
 
 
 

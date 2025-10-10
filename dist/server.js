@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import fastifyMySQL from "@fastify/mysql";
 import { PrismaClient } from "@prisma/client";
 import cors from '@fastify/cors';
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 const fastify = Fastify({
     logger: true
@@ -31,7 +32,8 @@ fastify.get('/user/:id', async function (req, reply) {
 fastify.post('/user', async (req, reply) => {
     const { name, age } = req.body;
     const user = await prisma.user.create({
-        data: { name, age }
+        data: { name, email: "dummy@example.com", // 仮のメール
+            password: "temporary", age }
     });
     reply.send(user);
     // fastify.mysql.query(
@@ -95,12 +97,25 @@ fastify.delete('/user/:id', async (req, reply) => {
     //   }
     // );
 });
+fastify.post(`/register`, async (req, reply) => {
+    const { name, email, password, age } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+        data: {
+            name,
+            email,
+            password: hashedPassword,
+            age,
+        }
+    });
+    reply.send(user);
+    //passwordも返すかも
+});
 fastify.get(`/health_check`, async (request, reply) => {
     return `OK`;
 });
 const start = async () => {
     try {
-       
         await fastify.listen({ port: 3000, host: "0.0.0.0" });
         console.log('サーバーがポート 3000 で起動しました。');
     }
