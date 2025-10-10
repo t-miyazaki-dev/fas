@@ -7,6 +7,10 @@ const prisma = new PrismaClient();
 const fastify = Fastify({
     logger: true
 });
+await fastify.register(cors, {
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+});
 fastify.register(fastifyMySQL, {
     connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
 });
@@ -96,7 +100,7 @@ fastify.get(`/health_check`, async (request, reply) => {
 });
 const start = async () => {
     try {
-        await fastify.register(cors, { origin: '*' });
+       
         await fastify.listen({ port: 3000, host: "0.0.0.0" });
         console.log('サーバーがポート 3000 で起動しました。');
     }

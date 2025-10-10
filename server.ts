@@ -22,6 +22,12 @@ const fastify = Fastify({
     logger:true
 });
 
+await fastify.register(cors, {
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+});
+
+
 interface UserBody {
   name: string;
   age: number;
@@ -160,7 +166,7 @@ fastify.get(`/health_check`,async(request: FastifyRequest,reply: FastifyReply) =
 
 const start = async () => {
   try {
-    await fastify.register(cors, { origin: '*' });
+    
     await fastify.listen({ port: 3000,host: "0.0.0.0" });
     console.log('サーバーがポート 3000 で起動しました。');
   } catch (err) {

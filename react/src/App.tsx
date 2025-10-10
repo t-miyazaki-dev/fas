@@ -11,11 +11,19 @@ export default function App(){
 
   const handleGetUser = async () => {
     try {
-      // setError("")
+      setError("")
       const res = await axios.get(`http://localhost:3000/user/${id}`)
-      setUser(res.data)
+
+      if (!res.data || !res.data.id) { // データがない場合
+      setUser(null);
+      setError("見つかりません");
+    } else {
+      setUser(res.data);
+      setError("");
+    }
+
     }catch(err){
-      // setUser(null)
+      setUser(null)
       setError("見つかりません")
       //これうまくいかん
     }
@@ -61,6 +69,23 @@ const handleUpdateUser = async () => {
   }
 }
 
+//delete
+const [deleteId,setDeleteId]  = useState("");
+
+const handleDeletedUser = async () => {
+  try{
+    const res = await axios.delete(`http://localhost:3000/user/${deleteId}`,)
+    if (!res.data || !res.data.id) {
+      alert("ユーザーが存在しません");
+    } else {
+      alert(`ユーザーを削除しました`);
+    }
+    setDeleteId(res.data)
+    //?
+  }catch(err){
+    alert("削除に失敗しました")
+  }
+}
 
 
 
@@ -138,6 +163,19 @@ const handleUpdateUser = async () => {
       placeholder="新しい年齢"
       />
       <button onClick ={handleUpdateUser}>更新</button>
+
+      <hr/>
+
+      {/* Deleted */}
+
+      <h1>ユーザー削除</h1>
+      <input
+      type="number"
+      value={deleteId}
+      onChange={(e) => setDeleteId(e.target.value)}
+      placeholder="削除するID"
+      ></input>
+      <button onClick ={handleDeletedUser}>削除</button>
 
 
 
