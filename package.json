@@ -1,28 +1,33 @@
 {
-  "name": "git",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "type": "module",
+  "main": "dist/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "build": "tsc -p .",
+    "start": "node dist/server.js",
+    "dev": "node --loader ts-node/esm server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.1.0",
     "@fastify/mysql": "^5.0.2",
     "@prisma/client": "^6.16.3",
     "bcryptjs": "^3.0.2",
     "fastify": "^5.6.1",
-    "fs": "^0.0.1-security",
     "mysql2": "^3.15.0",
     "prisma": "^6.16.3"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
 }

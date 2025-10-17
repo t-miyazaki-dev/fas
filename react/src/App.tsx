@@ -115,6 +115,16 @@ export default function App() {
   };
 
 
+  //login機能
+
+  const[loginEmail,setLoginEmail] = useState("")
+  const[loginPassword,setLoginPassword] = useState("")
+  const[loginMessage,setLoginMessage] = useState("")
+
+  const handlelogin = async() => {
+    
+  }
+
 
   return (
     <div>
