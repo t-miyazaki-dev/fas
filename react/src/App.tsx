@@ -117,12 +117,24 @@ export default function App() {
 
   //login機能
 
-  const[loginEmail,setLoginEmail] = useState("")
-  const[loginPassword,setLoginPassword] = useState("")
-  const[loginMessage,setLoginMessage] = useState("")
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+  const [loginMessage, setLoginMessage] = useState("")
 
-  const handlelogin = async() => {
-    
+  const handleLogin = async () => {
+    try {
+      const res = await axios.post("http://localhost:3000/login", {
+        email: loginEmail,
+        password: loginPassword
+      });
+      if (res.data.success) {
+        setLoginMessage("ログイン成功")
+      } else {
+        setLoginMessage("メールアドレスまたはパスワードが違います")
+      }
+    } catch (err) {
+      setLoginMessage("エラー")
+    }
   }
 
 
@@ -215,7 +227,8 @@ export default function App() {
       <button onClick={handleDeletedUser}>削除</button><hr />
 
 
-      
+      {/* ユーザー登録 */}
+
       <h1>ユーザー登録</h1>
       <input
         type="text"
@@ -243,11 +256,24 @@ export default function App() {
       />
       <button onClick={handleRegister}>登録</button>
       {regMessage && <p>{regMessage}</p>}
-      
+      <hr />
 
-
-
-
+      {/* login */}
+      <h1>ログイン</h1>
+      <input
+        type="email"
+        placeholder="メールアドレス"
+        value={loginEmail}
+        onChange={(e) => setLoginEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="パスワード"
+        value={loginPassword}
+        onChange={(e) => setLoginPassword(e.target.value)}
+      />
+      <button onClick={handleLogin}>ログイン</button>
+      {loginMessage && <p>{loginMessage}</p>}
 
     </div>
 

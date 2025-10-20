@@ -32,8 +32,10 @@ fastify.get('/user/:id', async function (req, reply) {
 fastify.post('/user', async (req, reply) => {
     const { name, age } = req.body;
     const user = await prisma.user.create({
-        data: { name, email: "dummy@example.com", // 仮のメール
-            password: "temporary", age }
+        data: {
+            name, email: "dummy@example.com", // 仮のメール
+            password: "temporary", age
+        }
     });
     reply.send(user);
     // fastify.mysql.query(
@@ -110,6 +112,26 @@ fastify.post(`/register`, async (req, reply) => {
     });
     reply.send(user);
     //passwordも返すかも
+});
+fastify.post('/login', async (req, reply) => {
+    const { email, password } = req.body;
+    //userの情報をメールで取得
+    const user = await prisma.user.findUnique({ where: { email } });
+    let ok;
+    if (user) {
+        ok = await bcrypt.compare(password, user.password); //(打ち込まれたパス,本物のパスを比較)
+    }
+    else {
+        ok = false;
+    }
+    if (!ok) {
+        return reply.send({ success: false, message: 'failure' });
+    }
+    return reply.send({
+        success: true,
+        message: `success`,
+        user, //passごと返しちゃう
+    });
 });
 fastify.get(`/health_check`, async (request, reply) => {
     return `OK`;
