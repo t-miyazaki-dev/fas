@@ -12,7 +12,7 @@ export default function App() {
   const handleGetUser = async () => {
     try {
       setError("")
-      const res = await axios.get(`http://localhost:3000/user/${id}`)
+      const res = await axios.get(`http://localhost:3000/user/${id}`,{ withCredentials: true })
 
       if (!res.data || !res.data.id) { // データがない場合
         setUser(null);
@@ -40,7 +40,7 @@ export default function App() {
       const res = await axios.post(`http://localhost:3000/user`, {
         name,
         age: Number(age),
-      })
+      },{ withCredentials: true })
       setNewUser(res.data);
       setName("");
       setAge("")
@@ -60,7 +60,7 @@ export default function App() {
       const res = await axios.patch(`http://localhost:3000/user/${updateId}`, {
         name: updateName,
         age: Number(updateAge),
-      })
+      },{ withCredentials: true })
       setUser(res.data)
       //あとで確認
       alert("ユーザー情報を更新しました")
@@ -75,7 +75,7 @@ export default function App() {
 
   const handleDeletedUser = async () => {
     try {
-      const res = await axios.delete(`http://localhost:3000/user/${deleteId}`,)
+      const res = await axios.delete(`http://localhost:3000/user/${deleteId}`,{ withCredentials: true })
       if (!res.data || !res.data.id) {
         alert("ユーザーが存在しません");
       } else {
@@ -126,8 +126,17 @@ export default function App() {
       const res = await axios.post("http://localhost:3000/login", {
         email: loginEmail,
         password: loginPassword
-      });
+      },
+      {
+        withCredentials: true,
+      }
+    );
       if (res.data.success) {
+        //token保存
+        //localStorage.setItem("token",res.data.token)
+
+
+
         setLoginMessage("ログイン成功")
       } else {
         setLoginMessage("メールアドレスまたはパスワードが違います")
@@ -155,6 +164,7 @@ export default function App() {
           <h2>ユーザ情報</h2>
           <p>ID: {user.id}</p>
           <p>名前: {user.name}</p>
+          <p>メール: {user.email}</p>   {/* ★ 追加 */}
           <p>年齢:{user.age}</p>
         </div>
       )}

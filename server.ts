@@ -12,7 +12,11 @@ import cors from '@fastify/cors';
 
 import bcrypt from "bcryptjs";
 
+import jwt from "@fastify/jwt";
 
+import cookie from "@fastify/cookie"
+
+import type { preValidationHookHandler } from 'fastify';
 
 
 
@@ -25,9 +29,40 @@ const fastify = Fastify({
 });
 
 await fastify.register(cors, {
-  origin: '*',
+  origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders:['Content-Type',
+    //'Authorization'
+    ],
+  credentials: true, 
 });
+
+await fastify.register(cookie); 
+
+await fastify.register(jwt,{
+  secret: process.env.JWT_SECRET as string, 
+  cookie: { cookieName: 'access_token' ,signed: false},  //むずいから後でこの辺確認
+})
+
+
+
+
+
+// fastify.decorate('authenticate',async (req: any,reply: FastifyReply) => {
+//   try{
+//     await req.jwtVerify();
+//   }catch{
+//     reply.code(401).send({message: 'unauthorized'})
+//   }
+// }
+// )
+
+const authenticate: preValidationHookHandler = async (req, reply) => {
+  try { await req.jwtVerify(); }
+  catch { reply.code(401).send({ message: 'unauthorized' }); }
+};
+
+
 
 
 interface UserBody {
@@ -49,9 +84,16 @@ fastify.register(fastifyMySQL, {
 });
 
 //read
-fastify.get<{ Body: UserBody; Params: UserId }>('/user/:id', async function (req, reply) {
+fastify.get<{ Body: UserBody; Params: UserId }>('/user/:id', { preValidation: [authenticate] }, async function (req, reply) {
   const user = await prisma.user.findUnique({
     where: { id: Number(req.params.id) },
+    select: {
+        id: true,
+        name: true,
+        email: true,   // ★ 追加：メールを返す
+        age: true,
+        // password: false ← selectでは指定不要（返さない）
+      },
   });
   reply.send(user);
 
@@ -67,7 +109,7 @@ fastify.get<{ Body: UserBody; Params: UserId }>('/user/:id', async function (req
 
 //create
 
-fastify.post<{ Body: UserBody; Params: UserId }>('/user', async (req, reply) => {
+fastify.post<{ Body: UserBody; Params: UserId }>('/user', { preValidation: [authenticate] },async (req, reply) => {
   const { name, age } = req.body;
 
   const user = await prisma.user.create({
@@ -106,7 +148,7 @@ fastify.post<{ Body: UserBody; Params: UserId }>('/user', async (req, reply) => 
 //   id:number;
 // }
 
-fastify.patch<{ Body: UserBody; Params: UserId }>('/user/:id', async (req, reply) => {
+fastify.patch<{ Body: UserBody; Params: UserId }>('/user/:id',{ preValidation: [authenticate] }, async (req, reply) => {
   const { name, age } = req.body;
   const { id } = req.params;
 
@@ -136,7 +178,7 @@ fastify.patch<{ Body: UserBody; Params: UserId }>('/user/:id', async (req, reply
 });
 
 //delete
-fastify.delete<{ Body: UserBody; Params: UserId }>('/user/:id', async (req, reply) => {
+fastify.delete<{ Body: UserBody; Params: UserId }>('/user/:id', { preValidation: [authenticate] },async (req, reply) => {
   const { id } = req.params;
 
   const user = await prisma.user.delete({
@@ -201,6 +243,12 @@ fastify.post<{ Body: LoginBody }>('/login', async (req, reply) => {
   //userの情報をメールで取得
   const user = await prisma.user.findUnique({ where: { email } })
 
+ 
+  if (!user) {
+  return reply.send({ success: false, message: 'failure' });    //以降user有り
+}
+
+
   let ok;
 
   if (user) {
@@ -213,10 +261,30 @@ fastify.post<{ Body: LoginBody }>('/login', async (req, reply) => {
     return reply.send({ success: false, message: 'failure' })
   }
 
+
+  // JWT を発行
+    const token = fastify.jwt.sign(
+    { sub: user.id, email: user.email, name: user.name },
+    { expiresIn: '1h' }
+  );
+
+  //cookieを送る
+  reply.setCookie("access_token",token,{
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax", // これでread以外もいけるようになった
+    path: '/',
+    maxAge: 60 * 60
+  })
+
+  // パスワードは返さない
+  const { password: _pw, ...safeUser } = user;
+
   return reply.send({
     success: true,
     message: `success`,
-    user, //passごと返しちゃう
+    //token,
+    user: safeUser,
   })
 
 })

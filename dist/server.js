@@ -4,21 +4,55 @@ import fastifyMySQL from "@fastify/mysql";
 import { PrismaClient } from "@prisma/client";
 import cors from '@fastify/cors';
 import bcrypt from "bcryptjs";
+import jwt from "@fastify/jwt";
+import cookie from "@fastify/cookie";
 const prisma = new PrismaClient();
 const fastify = Fastify({
     logger: true
 });
 await fastify.register(cors, {
-    origin: '*',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type',
+        //'Authorization'
+    ],
+    credentials: true,
 });
+await fastify.register(cookie);
+await fastify.register(jwt, {
+    secret: process.env.JWT_SECRET,
+    cookie: { cookieName: 'access_token', signed: false }, //むずいから後でこの辺確認
+});
+// fastify.decorate('authenticate',async (req: any,reply: FastifyReply) => {
+//   try{
+//     await req.jwtVerify();
+//   }catch{
+//     reply.code(401).send({message: 'unauthorized'})
+//   }
+// }
+// )
+const authenticate = async (req, reply) => {
+    try {
+        await req.jwtVerify();
+    }
+    catch {
+        reply.code(401).send({ message: 'unauthorized' });
+    }
+};
 fastify.register(fastifyMySQL, {
     connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
 });
 //read
-fastify.get('/user/:id', async function (req, reply) {
+fastify.get('/user/:id', { preValidation: [authenticate] }, async function (req, reply) {
     const user = await prisma.user.findUnique({
         where: { id: Number(req.params.id) },
+        select: {
+            id: true,
+            name: true,
+            email: true, // ★ 追加：メールを返す
+            age: true,
+            // password: false ← selectでは指定不要（返さない）
+        },
     });
     reply.send(user);
     // fastify.mysql.query(
@@ -29,7 +63,7 @@ fastify.get('/user/:id', async function (req, reply) {
     // )
 });
 //create
-fastify.post('/user', async (req, reply) => {
+fastify.post('/user', { preValidation: [authenticate] }, async (req, reply) => {
     const { name, age } = req.body;
     const user = await prisma.user.create({
         data: {
@@ -58,7 +92,7 @@ fastify.post('/user', async (req, reply) => {
 // interface UpdateUserId{
 //   id:number;
 // }
-fastify.patch('/user/:id', async (req, reply) => {
+fastify.patch('/user/:id', { preValidation: [authenticate] }, async (req, reply) => {
     const { name, age } = req.body;
     const { id } = req.params;
     const user = await prisma.user.update({
@@ -81,7 +115,7 @@ fastify.patch('/user/:id', async (req, reply) => {
     // );
 });
 //delete
-fastify.delete('/user/:id', async (req, reply) => {
+fastify.delete('/user/:id', { preValidation: [authenticate] }, async (req, reply) => {
     const { id } = req.params;
     const user = await prisma.user.delete({
         where: { id: Number(id) }
@@ -117,6 +151,9 @@ fastify.post('/login', async (req, reply) => {
     const { email, password } = req.body;
     //userの情報をメールで取得
     const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+        return reply.send({ success: false, message: 'failure' }); //以降user有り
+    }
     let ok;
     if (user) {
         ok = await bcrypt.compare(password, user.password); //(打ち込まれたパス,本物のパスを比較)
@@ -127,10 +164,23 @@ fastify.post('/login', async (req, reply) => {
     if (!ok) {
         return reply.send({ success: false, message: 'failure' });
     }
+    // JWT を発行
+    const token = fastify.jwt.sign({ sub: user.id, email: user.email, name: user.name }, { expiresIn: '1h' });
+    //cookieを送る
+    reply.setCookie("access_token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax", // これでread以外もいけるようになった
+        path: '/',
+        maxAge: 60 * 60
+    });
+    // パスワードは返さない
+    const { password: _pw, ...safeUser } = user;
     return reply.send({
         success: true,
         message: `success`,
-        user, //passごと返しちゃう
+        //token,
+        user: safeUser,
     });
 });
 fastify.get(`/health_check`, async (request, reply) => {
